@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" data-ng-app="patientApp">
+<head>
+<meta charset="ISO-8859-1">
+<title>File</title>
+<style type="text/css">
+thead {
+	color: green;
+}
+
+tbody {
+	color: blue;
+}
+
+tfoot {
+	color: red;
+}
+
+table, th, td {
+	border: 1px solid black;
+}
+
+th:hover {
+	cursor: pointer;
+	background: #AAA;
+}
+</style>
+<script data-require="angular.js@1.2.15" data-semver="1.2.15"
+	src="angular.js"></script>
+<script src="controller.js"></script>
+<script type="text/javascript">
+	function sortingTable(n) {
+		var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+		table = document.getElementById("myTable");
+		switching = true;
+		//Set the sorting direction to ascending:
+		dir = "asc";
+		while (switching) {
+			switching = false;
+			rows = table.getElementsByTagName("TR");
+			for (i = 1; i < (rows.length - 1); i++) {
+				shouldSwitch = false;
+				x = rows[i].getElementsByTagName("TD")[n];
+				y = rows[i + 1].getElementsByTagName("TD")[n];
+				if (dir == "asc") {
+					if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+						shouldSwitch = true;
+						break;
+					}
+				} else if (dir == "desc") {
+					if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+						shouldSwitch = true;
+						break;
+					}
+				}
+			}
+			if (shouldSwitch) {
+				rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+				switching = true;
+				switchcount++;
+			} else {
+				if (switchcount == 0 && dir == "asc") {
+					dir = "desc";
+					switching = true;
+				}
+			}
+		}
+	}
+	////////////////////////.
+
+	var TableIDvalue = "myTable";
+	var TableLastSortedColumn = -1;
+	function SortTable() {
+		var sortColumn = parseInt(arguments[0]);
+		var type = arguments.length > 1 ? arguments[1] : 'T';
+		var table = document.getElementById(TableIDvalue);
+		var tbody = table.getElementsByTagName("tbody")[0];
+		var rows = tbody.getElementsByTagName("tr");
+		var arrayOfRows = new Array();
+		for (var i = 0, len = rows.length; i < len; i++) {
+			arrayOfRows[i] = new Object;
+			arrayOfRows[i].oldIndex = i;
+			var celltext = rows[i].getElementsByTagName("td")[sortColumn].innerHTML
+					.replace(/<[^>]*>/g, "");
+			if (type == 'D') {
+				arrayOfRows[i].value = GetDateSortingKey(dateformat, celltext);
+			} else {
+				var re = type == "N" ? /[^\.\-\+\d]/g : /[^a-zA-Z0-9]/g;
+				arrayOfRows[i].value = celltext.replace(re, "").substr(0, 25)
+						.toLowerCase();
+			}
+		}
+		if (sortColumn == TableLastSortedColumn) {
+			arrayOfRows.reverse();
+		} else {
+			TableLastSortedColumn = sortColumn;
+			switch (type) {
+			case "N":
+				arrayOfRows.sort(CompareRowOfNumbers);
+				break;
+			case "D":
+				arrayOfRows.sort(CompareRowOfNumbers);
+				break;
+			default:
+				arrayOfRows.sort(CompareRowOfText);
+			}
+		}
+		var newTableBody = document.createElement("tbody");
+		for (var i = 0, len = arrayOfRows.length; i < len; i++) {
+			newTableBody.appendChild(rows[arrayOfRows[i].oldIndex]
+					.cloneNode(true));
+		}
+		table.replaceChild(newTableBody, tbody);
+	} // function SortTable()
+
+	function CompareRowOfNumbers(a, b) {
+		var aval = /\d/.test(a.value) ? parseFloat(a.value) : 0;
+		var bval = /\d/.test(b.value) ? parseFloat(b.value) : 0;
+		return (aval == bval ? 0 : (aval > bval ? 1 : -1));
+	}
+	// 	///////////////////
+	function download() {
+		var txtFile = "test.txt";
+		var file = new File(txtFile);
+		var str = document.getElementById("Table");
+
+		file.open("w"); // open file with write access
+		file.writeln(str);
+		
+		file.close();
+	}
+
+</script>
+</head>
+
+<body data-ng-controller="PatientListCtrl">
+<fieldset>
+	<table id="myTable" >
+		<thead>
+			<tr>
+				<th onclick="sortingTable(0)">Name</th>
+				<th onclick="sortingTable(1)">Category</th>
+				<th onclick="SortTable(2,'N')">Amount</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr data-ng-repeat="patient in patients track by $index">
+				<td>{{patient.name}}</td>
+				<td>{{patient.category}}</td>
+				<td class="sortnr">{{patient.amount}}</td>
+			</tr>
+		</tbody>
+	</table>
+</fieldset>
+<fieldset>
+	<form >
+		<table id="Table" >
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>C1</th>
+					<th>C2</th>
+					<th>C3</th>
+				</tr>
+			</thead>
+			<tbody>
+
+				<tr>
+					<td>a1</td>
+					<td>10</td>
+					<td>100</td>
+					<td>1000</td>
+				</tr>
+				<tr>
+					<td>a2</td>
+					<td>20</td>
+					<td>200</td>
+					<td>-</td>
+				</tr>
+				<tr>
+					<td>a3</td>
+					<td>30</td>
+					<td>-</td>
+					<td>3000</td>
+				</tr>
+				<tr>
+					<td>a5</td>
+					<td>-</td>
+					<td>500</td>
+					<td>5000</td>
+				</tr>
+				<tr>
+					<td>a6</td>
+					<td>-</td>
+					<td>600</td>
+					<td>-</td>
+				</tr>
+
+			</tbody>
+		</table>
+		<button onclick="download()">CreateFile</button>
+		
+	</form>
+</fieldset>
+</body>
+</html>
